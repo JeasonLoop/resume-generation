@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "WebSearch",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run:*)",
+      "Bash(xargs -r taskkill //F //PID)",
+      "Bash(powershell:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

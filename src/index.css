@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Noto Serif SC', 'Playfair Display', serif;
+  --font-sans: 'Quicksand', 'Varela Round', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Minimal Chic Palette */
+  --color-chic-bg: #fdfdfd; /* Off-white */
+  --color-chic-text: #1a1a1a; /* Almost Black */
+  --color-chic-accent: #a1a1aa; /* Cool Gray */
+  --color-chic-border: #e5e5e5; /* Light Gray Border */
+  --color-chic-hover: #f3f4f6; /* Very Light Gray Hover */
+  --color-chic-primary: #000000; /* Pure Black */
+
+  --animate-fade-in-up: fadeInUp 0.8s ease-out forwards;
+  --animate-reveal: reveal 1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+  /* Floating Animation Keyframes */
+  --animate-float: float 20s ease-in-out infinite;
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes reveal {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    33% { transform: translateY(-30px) translateX(20px); }
+    66% { transform: translateY(20px) translateX(-20px); }
+  }
+}
+
+@layer base {
+  /* Import Google Fonts for Rounded style */
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Varela+Round&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  html {
+    font-family: var(--font-sans);
+    /* Remove background color here to let AnimatedBackground show */
+    /* background-color: var(--color-chic-bg); */
+    color: var(--color-chic-text);
+  }
+
+  body {
+    @apply text-chic-text antialiased tracking-wide font-normal bg-transparent; /* Ensure body is transparent */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans); /* Switch headings to rounded sans too for consistency */
+    @apply tracking-tight font-bold;
+  }
+}
+
+@layer utilities {
+  .chic-card {
+    @apply bg-white/80 backdrop-blur-sm border border-chic-border p-8 hover:shadow-xl transition-all duration-500 ease-out rounded-2xl; /* Added rounded corners and transparency */
+  }
+
+  .chic-btn {
+    @apply px-8 py-3 border border-black text-black font-medium text-sm hover:bg-black hover:text-white transition-colors duration-300 relative overflow-hidden rounded-full; /* Changed to rounded-full */
+  }
+
+  .chic-btn-primary {
+    @apply bg-black text-white border-black hover:bg-white hover:text-black rounded-full;
+  }
+
+  .chic-input {
+    @apply w-full border-b border-gray-300 py-3 px-2 bg-transparent outline-none focus:border-black transition-colors duration-300 placeholder-gray-400 font-normal rounded-t-lg hover:bg-gray-50/50;
+  }
+
+  .chic-link {
+    @apply relative text-black text-sm font-medium after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-black after:transition-all after:duration-300 hover:after:w-full rounded-sm;
+  }
+
+  .text-reveal-container {
+    overflow: hidden;
+  }
+
+  .text-reveal {
+    display: block;
+    animation: reveal 1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+  }
+}
+
+/* Elegant Scrollbar - Rounded */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d4d4d8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a1a1aa;
+}
