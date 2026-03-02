@@ -34,6 +34,9 @@ if (NODE_ENV === 'production') {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - Nginx 反向代理需要此配置
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
