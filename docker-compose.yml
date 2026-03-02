@@ -22,6 +22,9 @@ services:
       - resume-uploads:/app/api/uploads
     networks:
       - resume-network
+    # 端口映射（Nginx 需要访问）
+    ports:
+      - "3001:3001"
     # 资源限制（适配2核2G轻量服务器）
     deploy:
       resources:
