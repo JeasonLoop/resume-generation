@@ -32,7 +32,7 @@ const Dashboard = () => {
   const fetchResumes = async () => {
     try {
       const response = await axios.get('/resumes');
-      setResumes(response.data.resumes);
+      setResumes(response.data.data.list || []);
     } catch (error) {
       console.error('Failed to fetch resumes:', error);
     } finally {
@@ -43,7 +43,7 @@ const Dashboard = () => {
   const fetchTemplates = async () => {
     try {
       const response = await axios.get('/templates');
-      setTemplates(response.data);
+      setTemplates(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
     }
@@ -147,9 +147,10 @@ const Dashboard = () => {
         is_public: false,
         template_id: templateId
       });
-      window.location.href = `/editor/${response.data.id}`;
+      window.location.href = `/editor/${response.data.data.id}`;
     } catch (error) {
       console.error('Failed to create resume:', error);
+      alert(error.message || '创建简历失败，请重新登录');
     }
   };
 
@@ -167,7 +168,7 @@ const Dashboard = () => {
           is_public: false,
           template_id: null
         });
-        window.location.href = `/editor/${response.data.id}`;
+        window.location.href = `/editor/${response.data.data.id}`;
       } catch (error) {
         console.error('Failed to import resume:', error);
       }

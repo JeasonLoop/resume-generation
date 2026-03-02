@@ -1,4 +1,7 @@
 import { Resume, Template } from '../models/index.js';
+import { success, fail, paginated, ErrorCode } from '../utils/response.js';
+
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 export const createResume = async (req, res) => {
   try {
@@ -14,10 +17,11 @@ export const createResume = async (req, res) => {
       is_public
     });
 
-    res.status(201).json(resume);
+    return success(res, resume, '简历创建成功');
   } catch (error) {
     console.error('Create resume error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
@@ -36,15 +40,11 @@ export const getResumes = async (req, res) => {
       include: [{ model: Template, attributes: ['name', 'id'] }]
     });
 
-    res.json({
-      resumes: rows,
-      total: count,
-      page,
-      totalPages: Math.ceil(count / limit)
-    });
+    return paginated(res, rows, count, page, limit);
   } catch (error) {
     console.error('Get resumes error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
@@ -59,22 +59,23 @@ export const getResumeById = async (req, res) => {
     });
 
     if (!resume) {
-      return res.status(404).json({ message: '未找到简历' });
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
     }
 
     // Parse content_json if it's a string
     if (typeof resume.content_json === 'string') {
-        try {
-            resume.content_json = JSON.parse(resume.content_json);
-        } catch {
-            // keep as string if parse fails
-        }
+      try {
+        resume.content_json = JSON.parse(resume.content_json);
+      } catch {
+        // keep as string if parse fails
+      }
     }
 
-    res.json(resume);
+    return success(res, resume);
   } catch (error) {
     console.error('Get resume error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
@@ -87,7 +88,7 @@ export const updateResume = async (req, res) => {
     const resume = await Resume.findOne({ where: { id, user_id } });
 
     if (!resume) {
-      return res.status(404).json({ message: 'Resume not found' });
+      return fail(res, ErrorCode.NOT_FOUND, '简历不存在');
     }
 
     await resume.update({
@@ -98,10 +99,11 @@ export const updateResume = async (req, res) => {
       is_public: is_public !== undefined ? is_public : resume.is_public
     });
 
-    res.json(resume);
+    return success(res, resume, '简历更新成功');
   } catch (error) {
     console.error('Update resume error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
@@ -115,13 +117,14 @@ export const deleteResume = async (req, res) => {
     });
 
     if (!deleted) {
-      return res.status(404).json({ message: '未找到简历' });
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
     }
 
-    res.json({ message: '简历删除成功' });
+    return success(res, null, '简历删除成功');
   } catch (error) {
     console.error('Delete resume error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
@@ -131,7 +134,7 @@ export const deleteResumesBatch = async (req, res) => {
     const user_id = req.user.id;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ message: '未提供有效的简历ID' });
+      return fail(res, ErrorCode.BAD_REQUEST, '未提供有效的简历ID');
     }
 
     const deletedCount = await Resume.destroy({
@@ -142,12 +145,13 @@ export const deleteResumesBatch = async (req, res) => {
     });
 
     if (deletedCount === 0) {
-      return res.status(404).json({ message: '未找到可删除的简历' });
+      return fail(res, ErrorCode.NOT_FOUND, '未找到可删除的简历');
     }
 
-    res.json({ message: `成功删除 ${deletedCount} 份简历` });
+    return success(res, { deletedCount }, `成功删除 ${deletedCount} 份简历`);
   } catch (error) {
     console.error('Batch delete resume error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };

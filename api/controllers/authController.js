@@ -1,16 +1,31 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
+import { success, fail, ErrorCode } from '../utils/response.js';
+
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// 获取 JWT_SECRET，确保在运行时读取
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET 未配置');
+  }
+  return secret;
+};
 
 export const register = async (req, res) => {
   try {
-    console.log('Register Request Body:', req.body);
-    const { email, password, name } = req.body;
+    const body = req.body ?? {};
+    if (!body.email || !body.password || !body.name) {
+      return fail(res, ErrorCode.BAD_REQUEST, '请提供邮箱、密码和昵称');
+    }
+    const { email, password, name } = body;
 
     // Check if user exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: '用户已存在' });
+      return fail(res, ErrorCode.USER_EXISTS, '用户已存在');
     }
 
     // Hash password
@@ -24,10 +39,9 @@ export const register = async (req, res) => {
     });
 
     // Generate token
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, email: user.email }, getJwtSecret(), { expiresIn: '24h' });
 
-    res.status(201).json({
-      message: '用户注册成功',
+    return success(res, {
       user: {
         id: user.id,
         email: user.email,
@@ -35,41 +49,38 @@ export const register = async (req, res) => {
         is_premium: user.is_premium
       },
       token
-    });
+    }, '用户注册成功');
   } catch (error) {
     console.error('Register error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
 export const login = async (req, res) => {
   try {
-    console.log('Login Request Body:', req.body);
-    const { email, password } = req.body;
+    const body = req.body ?? {};
+    if (!body.email || !body.password) {
+      return fail(res, ErrorCode.BAD_REQUEST, '请提供邮箱和密码');
+    }
+    const { email, password } = body;
 
     // Find user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      console.log('User not found for email:', email);
-      return res.status(400).json({ message: '凭证无效' });
+      return fail(res, ErrorCode.INVALID_CREDENTIALS, '凭证无效');
     }
-
-    console.log('User found:', user.id, user.email);
-    console.log('Stored hash:', user.password_hash.substring(0, 30) + '...');
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log('Password match:', isMatch);
-
     if (!isMatch) {
-      return res.status(400).json({ message: '凭证无效' });
+      return fail(res, ErrorCode.INVALID_CREDENTIALS, '凭证无效');
     }
 
     // Generate token
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, email: user.email }, getJwtSecret(), { expiresIn: '24h' });
 
-    res.json({
-      message: '登录成功',
+    return success(res, {
       user: {
         id: user.id,
         email: user.email,
@@ -78,24 +89,27 @@ export const login = async (req, res) => {
         avatar_url: user.avatar_url
       },
       token
-    });
+    }, '登录成功');
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: '服务器内部错误' });
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };
 
 export const getMe = async (req, res) => {
   try {
     const user = req.user;
-    res.json({
+    return success(res, {
       id: user.id,
       email: user.email,
       name: user.name,
       is_premium: user.is_premium,
       avatar_url: user.avatar_url
     });
-  } catch {
-    res.status(500).json({ message: '服务器内部错误' });
+  } catch (error) {
+    console.error('GetMe error:', error);
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }
 };

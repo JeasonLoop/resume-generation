@@ -19,7 +19,7 @@ const AIAssistant = () => {
         type: 'general',
         industry: 'Tech' // Could be dynamic
       });
-      setResult(response.data.optimized);
+      setResult(response.data.data.optimized);
     } catch (error) {
       console.error(error);
       setResult('内容生成失败，请重试。');

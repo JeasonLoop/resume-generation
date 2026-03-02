@@ -12,20 +12,21 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/login', { email, password });
-      const { user, token } = response.data;
+      const { user, token } = response.data.data;
 
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = error.message || '登录失败';
+      const errorCode = error.code;
 
-      // 判断是否是用户不存在的错误
-      const shouldRegister = errorMessage === '凭证无效' || errorMessage === 'Invalid credentials';
+      // 判断是否是用户不存在的错误 (INVALID_CREDENTIALS = 20002)
+      const shouldRegister = errorCode === 20002;
 
       set({
         isLoading: false,
-        error: shouldRegister ? null : errorMessage // 如果是用户不存在，不显示错误
+        error: shouldRegister ? null : errorMessage
       });
       return { success: false, shouldRegister };
     }
@@ -35,7 +36,7 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/register', { name, email, password });
-      const { user, token } = response.data;
+      const { user, token } = response.data.data;
 
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true, isLoading: false });
@@ -43,7 +44,7 @@ const useAuthStore = create((set) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error.response?.data?.message || 'Registration failed'
+        error: error.message || '注册失败'
       });
       return { success: false };
     }
@@ -60,8 +61,9 @@ const useAuthStore = create((set) => ({
 
     try {
       const response = await axios.get('/auth/me');
-      set({ user: response.data, isAuthenticated: true });
-    } catch {
+      set({ user: response.data.data, isAuthenticated: true });
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
       set({ user: null, token: null, isAuthenticated: false });
     }
