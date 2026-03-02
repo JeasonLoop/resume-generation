@@ -54,12 +54,13 @@ app.use('/api/', apiLimiter);
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:5176',
-    'http://localhost:3000'
-  ];
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:5176',
+      'http://localhost:3000',
+      'http://49.235.169.225:8080'  // 添加 Nginx 域名
+    ];
 
 app.use(cors({
   origin: (origin, callback) => {
