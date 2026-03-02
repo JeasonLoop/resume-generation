@@ -59,7 +59,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'http://localhost:5175',
       'http://localhost:5176',
       'http://localhost:3000',
-      'http://49.235.169.225:3001'  // 应用服务器端口
+      'http://resumegen.jeasonloop.online',
+      'https://resumegen.jeasonloop.online'
     ];
 
 app.use(cors({
