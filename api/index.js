@@ -158,19 +158,17 @@ const seedTemplates = async () => {
 };
 
 const seedDefaultUser = async () => {
-  // Check if user already exists
-  const existingUser = await User.findOne({ where: { email: 'test@example.com' } });
-  if (existingUser) {
-    console.log('Default user already exists, skipping seed');
-    console.log('Test login: test@example.com / 123456');
+  if (NODE_ENV === 'production') {
     return;
   }
 
-  console.log('Seeding default user...');
+  const existingUser = await User.findOne({ where: { email: 'test@example.com' } });
+  if (existingUser) {
+    console.log('Default test user already exists, skipping seed');
+    return;
+  }
 
   const hashedPassword = await bcrypt.hash('123456', 10);
-  console.log('Hashed password:', hashedPassword.substring(0, 20) + '...');
-
   const user = await User.create({
     name: '测试用户',
     email: 'test@example.com',
@@ -178,10 +176,7 @@ const seedDefaultUser = async () => {
     is_premium: true
   });
 
-  console.log('Default user created with ID:', user.id);
-  console.log('Test login credentials:');
-  console.log('  Email: test@example.com');
-  console.log('  Password: 123456');
+  console.log(`[dev] Test user created (id: ${user.id}) — test@example.com / 123456`);
 };
 
 // Database sync and server start

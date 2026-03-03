@@ -8,9 +8,23 @@ export const createResume = async (req, res) => {
     const { title, template_id, content_json, content_markdown, is_public } = req.body;
     const user_id = req.user.id;
 
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return fail(res, ErrorCode.VALIDATION_ERROR, '请提供简历标题');
+    }
+
+    if (template_id) {
+      const template = await Template.findByPk(template_id);
+      if (!template) {
+        return fail(res, ErrorCode.NOT_FOUND, '模板不存在');
+      }
+      if (template.is_premium && !req.user.is_premium) {
+        return fail(res, ErrorCode.FORBIDDEN, '该模板为高级模板，请升级会员后使用');
+      }
+    }
+
     const resume = await Resume.create({
       user_id,
-      title,
+      title: title.trim(),
       template_id,
       content_json: JSON.stringify(content_json),
       content_markdown,
@@ -28,8 +42,8 @@ export const createResume = async (req, res) => {
 export const getResumes = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
     const offset = (page - 1) * limit;
 
     const { count, rows } = await Resume.findAndCountAll({
@@ -91,6 +105,16 @@ export const updateResume = async (req, res) => {
       return fail(res, ErrorCode.NOT_FOUND, '简历不存在');
     }
 
+    if (template_id && template_id !== resume.template_id) {
+      const template = await Template.findByPk(template_id);
+      if (!template) {
+        return fail(res, ErrorCode.NOT_FOUND, '模板不存在');
+      }
+      if (template.is_premium && !req.user.is_premium) {
+        return fail(res, ErrorCode.FORBIDDEN, '该模板为高级模板，请升级会员后使用');
+      }
+    }
+
     await resume.update({
       title: title || resume.title,
       template_id: template_id || resume.template_id,
@@ -135,6 +159,9 @@ export const deleteResumesBatch = async (req, res) => {
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return fail(res, ErrorCode.BAD_REQUEST, '未提供有效的简历ID');
+    }
+    if (ids.length > 100 || !ids.every(id => Number.isInteger(id) && id > 0)) {
+      return fail(res, ErrorCode.VALIDATION_ERROR, 'ID 列表格式不正确');
     }
 
     const deletedCount = await Resume.destroy({

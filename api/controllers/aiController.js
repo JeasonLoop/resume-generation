@@ -16,24 +16,23 @@ const isValidApiKey = (key) => {
   return true;
 };
 
-// Create axios instance
 const apiClient = axios.create({
   baseURL: SILICONFLOW_BASE_URL,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${SILICONFLOW_API_KEY}`,
   },
 });
 
-// Helper function to call chat completions
 const callChatCompletion = async (messages, options = {}) => {
+  const { maxTokens = 1000, temperature = 0.7 } = options;
   try {
     const response = await apiClient.post('/chat/completions', {
       model: MODEL_NAME,
-      messages: messages,
-      max_tokens: options.maxTokens || 1000,
-      temperature: options.temperature || 0.7,
-      ...options,
+      messages,
+      max_tokens: maxTokens,
+      temperature,
     });
     return response.data.choices[0].message.content.trim();
   } catch (error) {

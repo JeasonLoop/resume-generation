@@ -12,11 +12,15 @@
   --color-chic-hover: #f3f4f6; /* Very Light Gray Hover */
   --color-chic-primary: #000000; /* Pure Black */
 
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
   --animate-fade-in-up: fadeInUp 0.8s ease-out forwards;
   --animate-reveal: reveal 1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
-  /* Floating Animation Keyframes */
   --animate-float: float 20s ease-in-out infinite;
 
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -38,8 +42,6 @@
 
   html {
     font-family: var(--font-sans);
-    /* Remove background color here to let AnimatedBackground show */
-    /* background-color: var(--color-chic-bg); */
     color: var(--color-chic-text);
   }
 
@@ -81,6 +83,14 @@
   .text-reveal {
     display: block;
     animation: reveal 1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

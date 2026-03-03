@@ -14,6 +14,8 @@ const getJwtSecret = () => {
   return secret;
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const register = async (req, res) => {
   try {
     const body = req.body ?? {};
@@ -22,13 +24,21 @@ export const register = async (req, res) => {
     }
     const { email, password, name } = body;
 
-    // Check if user exists
+    if (!EMAIL_RE.test(email)) {
+      return fail(res, ErrorCode.VALIDATION_ERROR, '邮箱格式不正确');
+    }
+    if (password.length < 6 || password.length > 64) {
+      return fail(res, ErrorCode.VALIDATION_ERROR, '密码长度需为 6-64 位');
+    }
+    if (name.trim().length < 1 || name.length > 50) {
+      return fail(res, ErrorCode.VALIDATION_ERROR, '昵称长度需为 1-50 个字符');
+    }
+
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return fail(res, ErrorCode.USER_EXISTS, '用户已存在');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user

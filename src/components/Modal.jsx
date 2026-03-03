@@ -29,8 +29,8 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity" 
+      <div
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
 
@@ -39,7 +39,7 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h3 className="text-xl font-serif font-bold text-gray-900">{title}</h3>
-          <button 
+          <button
             onClick={onClose}
             className="p-1 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
           >

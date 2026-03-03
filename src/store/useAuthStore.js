@@ -5,7 +5,7 @@ const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
-  isLoading: false,
+  isLoading: !!localStorage.getItem('token'),
   error: null,
 
   login: async (email, password) => {
@@ -57,15 +57,19 @@ const useAuthStore = create((set) => ({
 
   fetchUser: async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      set({ isLoading: false });
+      return;
+    }
 
+    set({ isLoading: true });
     try {
       const response = await axios.get('/auth/me');
-      set({ user: response.data.data, isAuthenticated: true });
+      set({ user: response.data.data, isAuthenticated: true, isLoading: false });
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
-      set({ user: null, token: null, isAuthenticated: false });
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
   }
 }));

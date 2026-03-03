@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { Plus, Search, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -10,6 +11,7 @@ import EmptyState, { CreateNewCard } from '../components/dashboard/EmptyState';
 import TemplateSelector from '../components/dashboard/TemplateSelector';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +37,7 @@ const Dashboard = () => {
       setResumes(response.data.data.list || []);
     } catch (error) {
       console.error('Failed to fetch resumes:', error);
+      showToast('加载简历列表失败');
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +84,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Failed to delete resume:', error);
+      showToast('删除失败，请重试');
     } finally {
       setIsDeleteModalOpen(false);
       setResumeToDelete(null);
@@ -101,6 +105,13 @@ const Dashboard = () => {
   const clearSelection = () => {
     setSelectedResumeIds(new Set());
   };
+
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const handleCreateNew = async (templateId = null) => {
     try {
@@ -147,15 +158,18 @@ const Dashboard = () => {
         is_public: false,
         template_id: templateId
       });
-      window.location.href = `/editor/${response.data.data.id}`;
+      navigate(`/editor/${response.data.data.id}`);
     } catch (error) {
       console.error('Failed to create resume:', error);
-      alert(error.message || '创建简历失败，请重新登录');
+      showToast(error.message || '创建简历失败');
     }
   };
 
   const handleImport = async (file) => {
     const reader = new FileReader();
+    reader.onerror = () => {
+      showToast('文件读取失败，请重试');
+    };
     reader.onload = async (event) => {
       const content = event.target.result;
       const fileName = file.name.replace(/\.[^/.]+$/, "");
@@ -168,9 +182,10 @@ const Dashboard = () => {
           is_public: false,
           template_id: null
         });
-        window.location.href = `/editor/${response.data.data.id}`;
+        navigate(`/editor/${response.data.data.id}`);
       } catch (error) {
         console.error('Failed to import resume:', error);
+        showToast('导入失败，请重试');
       }
     };
     reader.readAsText(file);
@@ -306,6 +321,17 @@ const Dashboard = () => {
         onTemplateSelect={handleCreateNew}
         onImport={handleImport}
       />
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium backdrop-blur-md animate-fade-in-up ${
+          toast.type === 'error'
+            ? 'bg-red-50/90 text-red-700 border border-red-200'
+            : 'bg-green-50/90 text-green-700 border border-green-200'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };
