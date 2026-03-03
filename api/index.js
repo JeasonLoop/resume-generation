@@ -140,16 +140,20 @@ if (NODE_ENV === 'production') {
 }
 
 const seedTemplates = async () => {
-  // Check if templates already exist
-  const existingTemplates = await Template.count();
-  if (existingTemplates > 0) {
-    console.log('Templates already exist, skipping seed');
+  // 获取现有模板的名称列表
+  const existingTemplates = await Template.findAll({ attributes: ['name'] });
+  const existingNames = new Set(existingTemplates.map(t => t.name));
+
+  const templates = getTemplates();
+  const newTemplates = templates.filter(t => !existingNames.has(t.name));
+
+  if (newTemplates.length === 0) {
+    console.log('All templates already exist, skipping seed');
     return;
   }
 
-  console.log('Seeding templates...');
-  const templates = getTemplates();
-  await Template.bulkCreate(templates);
+  console.log(`Seeding ${newTemplates.length} new templates...`);
+  await Template.bulkCreate(newTemplates);
   console.log('Templates seeded');
 };
 

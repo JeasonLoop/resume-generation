@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children, footer }) => {
+const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
@@ -18,6 +18,14 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
 
   if (!isOpen) return null;
 
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-6xl'
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -27,7 +35,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
       ></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white/90 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl w-full max-w-md transform transition-all animate-fade-in-up">
+      <div className={`relative bg-white/90 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl w-500 ${sizeClasses[size]} transform transition-all animate-fade-in-up`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h3 className="text-xl font-serif font-bold text-gray-900">{title}</h3>
@@ -40,7 +48,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className={size === 'xl' || size === 'full' ? 'p-2' : 'p-6'}>
           {children}
         </div>
 

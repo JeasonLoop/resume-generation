@@ -7,6 +7,8 @@ import Editor from './pages/Editor';
 import useAuthStore from './store/useAuthStore';
 import InteractiveParticles from './components/InteractiveParticles';
 import LoadingScreen from './components/LoadingScreen';
+import About from './pages/About';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -26,24 +28,28 @@ function App() {
   }, [fetchUser]);
 
   return (
-    <Router>
-      <InteractiveParticles />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/editor/:id" element={
-          <ProtectedRoute>
-            <Editor />
-          </ProtectedRoute>
-        } />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <InteractiveParticles />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/editor/:id" element={
+            <ProtectedRoute>
+              <Editor />
+            </ProtectedRoute>
+          } />
+          <Route path="/about" element={
+            <About />
+          } />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

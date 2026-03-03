@@ -1,4 +1,3 @@
-
 # Resume Generation Platform
 
 一个现代化的 AI 驱动简历生成平台，支持 Markdown 编辑、实时预览、多模板切换和 AI 内容优化。
@@ -12,32 +11,40 @@
 
 ### 📝 核心功能
 - **Markdown 编辑器** - 双栏实时预览，支持 GFM 语法
-- **16+ 精美模板** - 涵盖商务、创意、科技、学术等多种风格
-- **AI 智能优化** - 基于 GLM-4.7 的内容优化和建议生成
+- **20+ 精美模板** - 涵盖商务、创意、科技、学术等多种风格，精心调校排版细节
+- **AI 智能优化** - 基于 GLM-4 的内容优化和建议生成
 - **PDF 导出** - 一键导出高质量 PDF 简历
+- **模板实时预览** - 选择模板前可预览完整效果，支持分类筛选
 - **批量操作** - 支持批量删除简历
-- **文件导入** - 直接导入 Markdown 文件
+- **文件导入** - 直接导入 Markdown / TXT 文件
+- **关于页面** - 项目介绍与功能展示
+- **全局错误边界** - ErrorBoundary 组件兜底，防止白屏崩溃
 
 ### 🎨 模板展示
+
+所有模板均经过专业排版调校，统一了字号层级、间距系统和视觉细节。
+
 | 模板名称 | 风格 | 类型 |
 |---------|------|------|
-| 极简商务 | Professional | 免费 |
-| 摩登雅致 | Modern Elegance | 高级 |
-| 科技极简 | Tech Minimal | 免费 |
-| 瑞士国际 | Swiss Intl | 免费 |
-| 常青藤 | Ivy League | 免费 |
-| 柔和森系 | Soft Forest | 高级 |
-| 活力橙光 | Vibrant Orange | 免费 |
-| 深邃午夜 | Midnight Header | 高级 |
-| 粉彩艺术 | Pastel Art | 高级 |
-| 左侧强调 | Left Focus | 免费 |
-| 商务蓝调 | Corporate Blue | 免费 |
-| 极简居中 | Minimal Center | 免费 |
-| 海洋蓝调 | Ocean Blue | 免费 |
-| 樱花粉韵 | Cherry Blossom | 高级 |
-| 深紫优雅 | Deep Purple | 高级 |
-| 金秋收获 | Autumn Gold | 免费 |
-| 经典黑白 | Classic B&amp;W | 免费 |
+| 极简商务 (Professional) | minimal | 免费 |
+| 摩登雅致 (Modern Elegance) | modern | 高级 |
+| 科技极简 (Tech Minimal) | clean | 免费 |
+| 瑞士国际 (Swiss Intl) | minimal | 免费 |
+| 常青藤 (Ivy League) | traditional | 免费 |
+| 翡翠绿韵 (Emerald) | nature | 高级 |
+| 暖橘 (Warm Tangerine) | modern | 免费 |
+| 深邃午夜 (Midnight) | bold | 高级 |
+| 玫瑰金 (Rose Gold) | elegant | 高级 |
+| 商务蓝调 (Corporate Blue) | professional | 免费 |
+| 极简居中 (Minimal Center) | minimal | 免费 |
+| 深紫优雅 (Deep Purple) | elegant | 高级 |
+| 金秋暖调 (Autumn Warm) | warm | 免费 |
+| 霓虹都市 (Neon City) | futuristic | 高级 |
+| 杂志排版 (Editorial) | editorial | 高级 |
+| 几何现代 (Geometric) | geometric | 高级 |
+| 极简线条 (Line Art) | minimal | 免费 |
+| 复古打字机 (Typewriter) | vintage | 高级 |
+| 奢华金黑 (Luxury Gold) | luxury | 高级 |
 
 ### ⌨️ 快捷键
 - `Ctrl + S` - 保存简历
@@ -94,6 +101,8 @@ SILICONFLOW_API_KEY=your_siliconflow_api_key
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
+> 首次启动后如需刷新模板数据，可在 `api/.env` 中临时设置 `RESET_DB=true` 重启一次后移除。
+
 ## 🛠️ 技术栈
 
 ### 前端
@@ -112,6 +121,8 @@ OPENAI_API_KEY=your_openai_api_key_here
 - **SQLite3** - 数据库
 - **JWT** - 身份认证
 - **bcryptjs** - 密码加密
+- **Helmet** - HTTP 安全头
+- **express-rate-limit** - API 限流
 - **SiliconFlow API** - AI 服务
 
 ## 📁 项目结构
@@ -121,27 +132,29 @@ resume-generation/
 ├── api/                          # 后端 API
 │   ├── config/                   # 数据库配置
 │   ├── controllers/              # 控制器
-│   ├── middleware/               # 中间件
-│   ├── models/                   # 数据模型
+│   ├── data/                    # 模板数据 (seed)
+│   ├── middleware/               # 中间件 (auth, etc.)
+│   ├── models/                   # Sequelize 数据模型
 │   ├── routes/                   # 路由定义
+│   ├── utils/                   # 工具函数 (响应格式化)
 │   ├── index.js                  # 服务器入口
 │   └── package.json
 ├── src/                          # 前端应用
 │   ├── components/               # React 组件
-│   │   ├── Editor/              # 编辑器组件
-│   │   ├── dashboard/           # 仪表板组件
-│   │   └── common/              # 通用组件
-│   ├── pages/                   # 页面组件
+│   │   ├── Editor/              # 编辑器 (MarkdownEditor, Preview, Toolbar)
+│   │   ├── dashboard/           # 仪表板 (ResumeCard, TemplateSelector, TemplatePreview)
+│   │   └── common/              # 通用 (ErrorBoundary, ConfirmDialog, Skeleton)
+│   ├── pages/                   # 页面 (Login, Register, Dashboard, Editor, About)
 │   ├── store/                   # Zustand 状态管理
 │   ├── hooks/                   # 自定义 Hooks
-│   ├── utils/                   # 工具函数
-│   ├── App.jsx                  # 主应用组件
+│   ├── utils/                   # 工具函数 (axios 封装)
+│   ├── App.jsx                  # 路由 & ErrorBoundary
 │   ├── main.jsx                 # React 入口
 │   └── index.css                # 全局样式
 ├── public/                       # 静态资源
 ├── package.json                  # 根 package.json
 ├── vite.config.js               # Vite 配置
-└── database.sqlite              # SQLite 数据库
+└── database.sqlite              # SQLite 数据库 (自动生成)
 ```
 
 ## 🔑 测试账号
@@ -166,8 +179,11 @@ resume-generation/
 
 - JWT Token 认证 (24小时过期)
 - bcryptjs 密码加密
+- Helmet HTTP 安全头
+- API 限流 (15分钟/100次)
 - 受保护的 API 路由
-- CORS 配置
+- CORS 白名单配置
+- 全局错误边界 (前端)
 
 ## 📄 API 文档
 
@@ -192,6 +208,9 @@ resume-generation/
 - `GET /api/templates` - 获取所有模板
 - `GET /api/templates/:id` - 获取单个模板
 
+### 健康检查
+- `GET /api/health` - 服务状态 (供 Docker/Nginx 使用)
+
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
@@ -199,8 +218,3 @@ resume-generation/
 ## 📄 许可证
 
 MIT License
-
----
-
-**享受制作专业简历的乐趣！** 🎉
-

@@ -10,19 +10,29 @@ const MarkdownEditor = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, error
+  const lastSaveTimeRef = useRef(Date.now());
 
-  // Auto-save logic
+  // 基于内容变化的防抖自动保存
   useEffect(() => {
-    const saveInterval = setInterval(async () => {
-      if (saveStatus === 'unsaved') {
-        setSaveStatus('saving');
-        const success = await saveResume();
-        setSaveStatus(success ? 'saved' : 'error');
-      }
-    }, 30000); // Check every 30 seconds
+    if (!resume?.content_markdown) return;
 
-    return () => clearInterval(saveInterval);
-  }, [saveStatus, saveResume]);
+    const timer = setTimeout(() => {
+      const timeSinceLastSave = Date.now() - lastSaveTimeRef.current;
+      if (timeSinceLastSave >= 2000) { // 至少间隔2秒
+        setSaveStatus('saving');
+        saveResume().then(success => {
+          if (success) {
+            setSaveStatus('saved');
+            lastSaveTimeRef.current = Date.now();
+          } else {
+            setSaveStatus('error');
+          }
+        });
+      }
+    }, 1500); // 停止输入1.5秒后自动保存
+
+    return () => clearTimeout(timer);
+  }, [resume?.content_markdown, saveResume]);
 
   const insertText = (before, after = '') => {
     const textarea = textareaRef.current;

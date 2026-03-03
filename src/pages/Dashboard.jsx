@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from '../utils/axios';
 import { Plus, Search, LayoutGrid, List as ListIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import LoadingScreen from '../components/LoadingScreen';
 import { DeleteConfirmDialog } from '../components/common/ConfirmDialog';
 import { DashboardSkeleton } from '../components/common/Skeleton';
 import ResumeCard from '../components/dashboard/ResumeCard';
@@ -14,6 +13,7 @@ const Dashboard = () => {
   const [resumes, setResumes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [templates, setTemplates] = useState([]);
 
@@ -180,8 +180,20 @@ const Dashboard = () => {
     setIsTemplateModalOpen(true);
   };
 
-  const filteredResumes = resumes.filter(resume =>
-    resume.title.toLowerCase().includes(searchQuery.toLowerCase())
+  // 搜索防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // 使用 useMemo 优化过滤性能
+  const filteredResumes = useMemo(() =>
+    resumes.filter(resume =>
+      resume.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+    ),
+    [resumes, debouncedQuery]
   );
 
   return (
