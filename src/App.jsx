@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const { fetchUser } = useAuthStore();
+  const { fetchUser, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     fetchUser();
@@ -32,6 +32,9 @@ function App() {
       <Router>
         <InteractiveParticles />
         <Routes>
+          <Route path="/" element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+          } />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={

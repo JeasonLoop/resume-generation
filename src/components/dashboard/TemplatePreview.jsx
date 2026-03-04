@@ -49,11 +49,12 @@ const TemplatePreview = ({ isOpen, onClose, template, content }) => {
         <div className="bg-gray-100 rounded-lg overflow-hidden" style={{ height: '75vh' }}>
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
             <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{template.category} / {template.style}</span>
-            {template.is_premium && (
+            {/* 移除高级模板预览标识 */}
+            {/* {template.is_premium && (
               <span className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] rounded-full font-medium">
                 <Crown size={10} /> Premium
               </span>
-            )}
+            )} */}
           </div>
           
           <div className="overflow-y-auto p-6 h-full" style={{ height: 'calc(75vh - 36px)' }}>

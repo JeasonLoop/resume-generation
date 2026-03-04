@@ -181,7 +181,7 @@ const seedDefaultUser = async () => {
 
 // Database sync and server start
 const shouldForceReset = NODE_ENV === 'development' && process.env.RESET_DB === 'true';
-const shouldAlter = NODE_ENV === 'production';
+const shouldAlter = NODE_ENV === 'production' || NODE_ENV === 'development';
 
 // 错误处理中间件（必须放在所有路由之后）
 app.use(errorHandler);

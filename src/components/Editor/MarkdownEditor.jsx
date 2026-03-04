@@ -5,12 +5,25 @@ import Modal from '../Modal';
 import IconPicker from '../IconPicker';
 
 const MarkdownEditor = () => {
-  const { resume, updateContent, saveResume } = useResumeStore();
+  const { resume, updateContent, saveResume, setEditorSelection } = useResumeStore();
   const textareaRef = useRef(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, error
-  const lastSaveTimeRef = useRef(Date.now());
+  const [saveStatus, setSaveStatus] = useState('saved');
+  const lastSaveTimeRef = useRef(0);
+
+  // 在首次渲染后初始化时间，确保 render 过程是纯净的
+  useEffect(() => {
+    lastSaveTimeRef.current = Date.now();
+  }, []);
+
+  const syncSelection = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    setEditorSelection({ start, end, text: ta.value.substring(start, end) });
+  };
 
   // 基于内容变化的防抖自动保存
   useEffect(() => {
@@ -125,6 +138,9 @@ const MarkdownEditor = () => {
           className="absolute inset-0 w-full h-full p-8 bg-transparent text-gray-800 font-mono text-sm leading-relaxed resize-none focus:outline-none selection:bg-black/10 placeholder-gray-400 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           value={resume.content_markdown || ''}
           onChange={handleChange}
+          onSelect={syncSelection}
+          onKeyUp={syncSelection}
+          onClick={syncSelection}
           placeholder="# 您的姓名\n\n## 工作经历\n..."
           spellCheck="false"
         />

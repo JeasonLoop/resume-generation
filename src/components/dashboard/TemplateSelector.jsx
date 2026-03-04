@@ -142,7 +142,8 @@ const TemplateSelector = ({ isOpen, onClose, templates, onTemplateSelect, onImpo
                 <div className="ml-3 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h4 className="font-semibold text-sm text-gray-900 truncate">{t.name}</h4>
-                    {t.is_premium && <Crown size={12} className="text-amber-500 flex-shrink-0" />}
+                    {/* 移除高级模板皇冠标识 */}
+                    {/* {t.is_premium && <Crown size={12} className="text-amber-500 flex-shrink-0" />} */}
                   </div>
                   <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider">{t.category} / {t.style}</p>
                 </div>

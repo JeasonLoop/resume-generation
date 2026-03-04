@@ -17,9 +17,12 @@ export const createResume = async (req, res) => {
       if (!template) {
         return fail(res, ErrorCode.NOT_FOUND, '模板不存在');
       }
+      // 移除高级模板限制，目前所有用户均可使用
+      /*
       if (template.is_premium && !req.user.is_premium) {
         return fail(res, ErrorCode.FORBIDDEN, '该模板为高级模板，请升级会员后使用');
       }
+      */
     }
 
     const resume = await Resume.create({
@@ -110,9 +113,12 @@ export const updateResume = async (req, res) => {
       if (!template) {
         return fail(res, ErrorCode.NOT_FOUND, '模板不存在');
       }
+      // 移除高级模板限制，目前所有用户均可使用
+      /*
       if (template.is_premium && !req.user.is_premium) {
         return fail(res, ErrorCode.FORBIDDEN, '该模板为高级模板，请升级会员后使用');
       }
+      */
     }
 
     await resume.update({
