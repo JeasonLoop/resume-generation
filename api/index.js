@@ -38,7 +38,10 @@ const PORT = process.env.PORT || 3001;
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // 禁用 CSP，避免在 HTTP 下限制资源加载
+  hsts: false,                  // 禁用 HSTS，防止浏览器强制跳转 HTTPS
+}));
 
 // Rate limiting
 const apiLimiter = rateLimit({
