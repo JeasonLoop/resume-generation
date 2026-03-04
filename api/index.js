@@ -143,21 +143,14 @@ if (NODE_ENV === 'production') {
 }
 
 const seedTemplates = async () => {
-  // 获取现有模板的名称列表
-  const existingTemplates = await Template.findAll({ attributes: ['name'] });
-  const existingNames = new Set(existingTemplates.map(t => t.name));
-
   const templates = getTemplates();
-  const newTemplates = templates.filter(t => !existingNames.has(t.name));
-
-  if (newTemplates.length === 0) {
-    console.log('All templates already exist, skipping seed');
-    return;
+  console.log(`Syncing ${templates.length} templates...`);
+  
+  for (const t of templates) {
+    await Template.upsert(t);
   }
-
-  console.log(`Seeding ${newTemplates.length} new templates...`);
-  await Template.bulkCreate(newTemplates);
-  console.log('Templates seeded');
+  
+  console.log('Templates synced');
 };
 
 const seedDefaultUser = async () => {
@@ -184,7 +177,8 @@ const seedDefaultUser = async () => {
 
 // Database sync and server start
 const shouldForceReset = NODE_ENV === 'development' && process.env.RESET_DB === 'true';
-const shouldAlter = NODE_ENV === 'production' || NODE_ENV === 'development';
+// SQLite 不支持复杂的 alter 操作，开发环境下如果同步失败，建议手动设置 RESET_DB=true 重置
+const shouldAlter = NODE_ENV === 'production'; 
 
 // 错误处理中间件（必须放在所有路由之后）
 app.use(errorHandler);

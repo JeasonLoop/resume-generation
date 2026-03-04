@@ -137,9 +137,9 @@ const Toolbar = ({ onOpenPrintModal }) => {
         <button
           onClick={handlePrint}
           className="chic-btn px-6 py-2.5 text-[10px]"
-          title="下载为 PDF 格式"
+          title="下载为 PDF、图片或 Markdown 格式"
         >
-          导出 PDF
+          导出作品
         </button>
       </div>
 

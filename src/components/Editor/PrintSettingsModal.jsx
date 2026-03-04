@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Printer, Download, Loader2 } from 'lucide-react';
+import { X, Printer, Download, Loader2, FileText, Image as ImageIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import useResumeStore from '../../store/useResumeStore';
@@ -37,7 +37,7 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
 
       // Calculate dimensions based on settings
       const pageWidth = localSettings.pageSize === 'A4' ? 210 : 215.9; // mm
-      const pageHeight = localSettings.pageSize === 'A4' ? 297 : 279.4; // mm
+      // const pageHeight = localSettings.pageSize === 'A4' ? 297 : 279.4; // mm
 
       // Use html2canvas to capture the element
       const canvas = await html2canvas(element, {
@@ -74,6 +74,75 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
       alert('PDF导出失败，请重试');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleExportImage = async (format = 'png') => {
+    if (!previewRef.current) return;
+
+    setIsExporting(true);
+    try {
+      // Apply settings before export
+      onSettingsChange(localSettings);
+
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = previewRef.current;
+
+      // Use html2canvas to capture the element
+      const canvas = await html2canvas(element, {
+        scale: 3, // Higher scale for better image quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      // Convert to image data
+      const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+      const imgData = canvas.toDataURL(mimeType, 0.95);
+
+      // Create download link
+      const fileName = resume?.title?.trim() || 'resume';
+      const cleanFileName = fileName.replace(/[<>:"/\\|?*]+/g, '_').replace(/\s+/g, '_');
+
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `${cleanFileName}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      onClose();
+    } catch (error) {
+      console.error(`Error exporting ${format.toUpperCase()}:`, error);
+      alert(`${format.toUpperCase()}导出失败，请重试`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportMarkdown = () => {
+    try {
+      const content = resume?.content_markdown || '';
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      const fileName = resume?.title?.trim() || 'resume';
+      const cleanFileName = fileName.replace(/[<>:"/\\|?*]+/g, '_').replace(/\s+/g, '_');
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${cleanFileName}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      onClose();
+    } catch (error) {
+      console.error('Error exporting Markdown:', error);
+      alert('Markdown导出失败，请重试');
     }
   };
 
@@ -218,15 +287,44 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    <span>直接导出 PDF</span>
+                    <span>导出 PDF</span>
                   </>
                 )}
               </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleExportImage('png')}
+                  disabled={isExporting}
+                  className="flex items-center justify-center space-x-2 px-3 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium disabled:opacity-50"
+                >
+                  <ImageIcon size={14} />
+                  <span>PNG 图片</span>
+                </button>
+                <button
+                  onClick={() => handleExportImage('jpg')}
+                  disabled={isExporting}
+                  className="flex items-center justify-center space-x-2 px-3 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium disabled:opacity-50"
+                >
+                  <ImageIcon size={14} />
+                  <span>JPG 图片</span>
+                </button>
+              </div>
+
+              <button
+                onClick={handleExportMarkdown}
+                disabled={isExporting}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium disabled:opacity-50"
+              >
+                <FileText size={14} />
+                <span>导出 Markdown (.md)</span>
+              </button>
+
               <button
                 onClick={handleApply}
-                className="w-full px-4 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                className="w-full px-4 py-2.5 border border-gray-200 text-gray-400 rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors text-xs font-medium"
               >
-                应用到预览
+                仅应用设置到预览
               </button>
             </div>
           </div>
