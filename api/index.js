@@ -35,7 +35,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Trust proxy - Nginx 反向代理需要此配置
-app.set('trust proxy', 1);
+// app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
@@ -78,7 +78,9 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 }));
 
 // 兼容多种 Content-Type，解决 Nginx 代理后 req.body 未解析问题
