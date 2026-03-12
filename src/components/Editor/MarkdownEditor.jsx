@@ -5,24 +5,47 @@ import Modal from '../Modal';
 import IconPicker from '../IconPicker';
 
 const MarkdownEditor = () => {
-  const { resume, updateContent, saveResume } = useResumeStore();
+  const { resume, updateContent, saveResume, setEditorSelection } = useResumeStore();
   const textareaRef = useRef(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('saved'); // saved, saving, error
+  const [saveStatus, setSaveStatus] = useState('saved');
+  const lastSaveTimeRef = useRef(0);
 
-  // Auto-save logic
+  // 在首次渲染后初始化时间，确保 render 过程是纯净的
   useEffect(() => {
-    const saveInterval = setInterval(async () => {
-      if (saveStatus === 'unsaved') {
-        setSaveStatus('saving');
-        const success = await saveResume();
-        setSaveStatus(success ? 'saved' : 'error');
-      }
-    }, 30000); // Check every 30 seconds
+    lastSaveTimeRef.current = Date.now();
+  }, []);
 
-    return () => clearInterval(saveInterval);
-  }, [saveStatus, saveResume]);
+  const syncSelection = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    setEditorSelection({ start, end, text: ta.value.substring(start, end) });
+  };
+
+  // 基于内容变化的防抖自动保存
+  useEffect(() => {
+    if (!resume?.content_markdown) return;
+
+    const timer = setTimeout(() => {
+      const timeSinceLastSave = Date.now() - lastSaveTimeRef.current;
+      if (timeSinceLastSave >= 2000) { // 至少间隔2秒
+        setSaveStatus('saving');
+        saveResume().then(success => {
+          if (success) {
+            setSaveStatus('saved');
+            lastSaveTimeRef.current = Date.now();
+          } else {
+            setSaveStatus('error');
+          }
+        });
+      }
+    }, 1500); // 停止输入1.5秒后自动保存
+
+    return () => clearTimeout(timer);
+  }, [resume?.content_markdown, saveResume]);
 
   const insertText = (before, after = '') => {
     const textarea = textareaRef.current;
@@ -115,6 +138,9 @@ const MarkdownEditor = () => {
           className="absolute inset-0 w-full h-full p-8 bg-transparent text-gray-800 font-mono text-sm leading-relaxed resize-none focus:outline-none selection:bg-black/10 placeholder-gray-400 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
           value={resume.content_markdown || ''}
           onChange={handleChange}
+          onSelect={syncSelection}
+          onKeyUp={syncSelection}
+          onClick={syncSelection}
           placeholder="# 您的姓名\n\n## 工作经历\n..."
           spellCheck="false"
         />

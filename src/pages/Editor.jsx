@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import useResumeStore from '../store/useResumeStore';
 import MarkdownEditor from '../components/Editor/MarkdownEditor';
 import Preview from '../components/Editor/Preview';
@@ -8,7 +8,7 @@ import AIAssistant from '../components/Editor/AIAssistant';
 import PrintSettingsModal from '../components/Editor/PrintSettingsModal';
 import { EditorSkeleton } from '../components/common/Skeleton';
 import { useEditorShortcuts } from '../hooks/useKeyboardShortcuts';
-import { Loader2 } from 'lucide-react';
+import { RefreshCw, ArrowLeft } from 'lucide-react';
 
 const Editor = () => {
   const { id } = useParams();
@@ -54,7 +54,21 @@ const Editor = () => {
         <div className="text-center p-8 bg-white/80 backdrop-blur-md border border-gray-200 shadow-xl max-w-md rounded-2xl">
           <div className="text-black text-6xl mb-4 font-serif">!</div>
           <h2 className="text-2xl font-bold text-black mb-2 font-serif">无法加载简历</h2>
-          <p className="text-gray-500 font-light">{error}</p>
+          <p className="text-gray-500 font-light mb-6">{error}</p>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs uppercase tracking-wider font-medium border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+            >
+              <ArrowLeft size={14} /> 返回
+            </Link>
+            <button
+              onClick={() => fetchResume(id)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs uppercase tracking-wider font-medium bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
+            >
+              <RefreshCw size={14} /> 重试
+            </button>
+          </div>
         </div>
       </div>
     );

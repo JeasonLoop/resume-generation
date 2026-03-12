@@ -7,9 +7,15 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register, isLoading, error } = useAuthStore();
+  const { register, isLoading, error, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // 从登录页面传来的邮箱
   useEffect(() => {

@@ -30,6 +30,22 @@ const User = sequelize.define('User', {
   is_premium: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  ai_usage_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  custom_api_key: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  custom_base_url: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  custom_model: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'users',

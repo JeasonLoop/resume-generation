@@ -96,23 +96,30 @@ const InteractiveParticles = () => {
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX; // Changed to clientX/Y for better accuracy
+    // 定义事件处理函数，以便正确移除
+    const handleMouseMove = (e) => {
+      mouse.x = e.clientX;
       mouse.y = e.clientY;
-    });
-    window.addEventListener('mouseleave', () => {
+    };
+
+    const handleMouseLeave = () => {
       mouse.x = null;
       mouse.y = null;
-    });
+    };
+
+    // 添加事件监听
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave);
 
     resizeCanvas();
     animate();
 
+    // 清理时移除相同的函数引用
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('mousemove', () => {});
-      window.removeEventListener('mouseleave', () => {});
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

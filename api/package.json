@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "refresh-templates": "node scripts/refreshTemplates.js"
   },
   "dependencies": {
     "axios": "^1.13.5",

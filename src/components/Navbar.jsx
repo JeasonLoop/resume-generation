@@ -38,6 +38,12 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center space-x-8">
+              {/* About Page Link */}
+              <Link to="/about" className="hidden md:flex items-center space-x-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors">
+                <HelpCircle size={14} strokeWidth={1.5} />
+                <span>关于</span>
+              </Link>
+
               {/* Shortcuts Help Button */}
               <button
                 onClick={() => setShowShortcuts(true)}

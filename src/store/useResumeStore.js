@@ -8,10 +8,36 @@ const useResumeStore = create((set, get) => ({
   error: null,
   templates: [],
 
+  editorSelection: { start: 0, end: 0, text: '' },
+  setEditorSelection: (sel) => set({ editorSelection: sel }),
+
+  insertAtCursor: (text) => {
+    const { resume, editorSelection } = get();
+    if (!resume) return;
+    const md = resume.content_markdown || '';
+    const { start, end } = editorSelection;
+    const newMd = md.substring(0, start) + text + md.substring(end);
+    set({ resume: { ...resume, content_markdown: newMd } });
+  },
+
+  replaceSelection: (text) => {
+    const { resume, editorSelection } = get();
+    if (!resume) return;
+    const md = resume.content_markdown || '';
+    const { start, end } = editorSelection;
+    if (start === end) {
+      const newMd = md + '\n\n' + text;
+      set({ resume: { ...resume, content_markdown: newMd } });
+    } else {
+      const newMd = md.substring(0, start) + text + md.substring(end);
+      set({ resume: { ...resume, content_markdown: newMd } });
+    }
+  },
+
   fetchTemplates: async () => {
     try {
       const response = await axios.get('/templates');
-      set({ templates: response.data });
+      set({ templates: response.data.data || [] });
     } catch {
       console.error('Failed to load templates');
     }
@@ -21,7 +47,7 @@ const useResumeStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.get(`/resumes/${id}`);
-      set({ resume: response.data, isLoading: false });
+      set({ resume: response.data.data, isLoading: false });
     } catch {
       set({ isLoading: false, error: 'Failed to load resume' });
     }
