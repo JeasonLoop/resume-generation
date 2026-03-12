@@ -53,7 +53,7 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-// CORS configuration
+// CORS：仅在后端统一配置（Nginx 不添加 CORS 头，避免重复）
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : [
