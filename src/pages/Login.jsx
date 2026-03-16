@@ -74,6 +74,9 @@ const Login = () => {
                   <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 group-focus-within:text-black transition-colors">
                     密码
                   </label>
+                  <Link to="/forgot-password" className="text-[10px] text-blue-500 hover:text-blue-600 transition-colors">
+                    忘记密码？
+                  </Link>
                 </div>
                 <input
                   id="password"

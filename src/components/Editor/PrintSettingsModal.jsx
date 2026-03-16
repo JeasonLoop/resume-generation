@@ -10,6 +10,8 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
   const { resume, templates } = useResumeStore();
   const [localSettings, setLocalSettings] = useState(printSettings);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(null); // { step: string, percentage: number }
+  const [exportError, setExportError] = useState(null);
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -26,18 +28,20 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
     if (!previewRef.current) return;
 
     setIsExporting(true);
+    setExportError(null);
     try {
+      setExportProgress({ step: '准备导出...', percentage: 10 });
       // Apply settings before export
       onSettingsChange(localSettings);
 
       // Wait for DOM to update
       await new Promise(resolve => setTimeout(resolve, 300));
+      setExportProgress({ step: '渲染页面内容...', percentage: 30 });
 
       const element = previewRef.current;
 
       // Calculate dimensions based on settings
       const pageWidth = localSettings.pageSize === 'A4' ? 210 : 215.9; // mm
-      // const pageHeight = localSettings.pageSize === 'A4' ? 297 : 279.4; // mm
 
       // Use html2canvas to capture the element
       const canvas = await html2canvas(element, {
@@ -45,7 +49,11 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        onProgress: (progress) => {
+          setExportProgress({ step: '渲染页面内容...', percentage: 30 + Math.floor(progress * 40) });
+        }
       });
+      setExportProgress({ step: '生成PDF文件...', percentage: 75 });
 
       // Create PDF
       const pdf = new jsPDF({
@@ -62,18 +70,25 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
 
+      setExportProgress({ step: '准备下载...', percentage: 95 });
       // Save PDF
       const fileName = resume?.title?.trim() || 'resume';
       // Clean filename but keep readability
       const cleanFileName = fileName.replace(/[<>:"/\\|?*]+/g, '_').replace(/\s+/g, '_');
       pdf.save(`${cleanFileName}.pdf`);
 
-      onClose();
+      setExportProgress({ step: '导出完成！', percentage: 100 });
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('PDF导出失败，请重试');
+      setExportError('PDF导出失败，请重试');
     } finally {
       setIsExporting(false);
+      setTimeout(() => {
+        setExportProgress(null);
+      }, 1000);
     }
   };
 
@@ -81,12 +96,15 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
     if (!previewRef.current) return;
 
     setIsExporting(true);
+    setExportError(null);
     try {
+      setExportProgress({ step: '准备导出...', percentage: 10 });
       // Apply settings before export
       onSettingsChange(localSettings);
 
       // Wait for DOM to update
       await new Promise(resolve => setTimeout(resolve, 300));
+      setExportProgress({ step: '渲染页面内容...', percentage: 30 });
 
       const element = previewRef.current;
 
@@ -96,7 +114,11 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        onProgress: (progress) => {
+          setExportProgress({ step: '渲染页面内容...', percentage: 30 + Math.floor(progress * 50) });
+        }
       });
+      setExportProgress({ step: '生成图片...', percentage: 85 });
 
       // Convert to image data
       const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
@@ -113,12 +135,18 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
       link.click();
       document.body.removeChild(link);
 
-      onClose();
+      setExportProgress({ step: '导出完成！', percentage: 100 });
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (error) {
       console.error(`Error exporting ${format.toUpperCase()}:`, error);
-      alert(`${format.toUpperCase()}导出失败，请重试`);
+      setExportError(`${format.toUpperCase()}导出失败，请重试`);
     } finally {
       setIsExporting(false);
+      setTimeout(() => {
+        setExportProgress(null);
+      }, 1000);
     }
   };
 
@@ -274,6 +302,35 @@ const PrintSettingsModal = ({ isOpen, onClose, printSettings, onSettingsChange }
 
             {/* Actions */}
             <div className="space-y-3 pt-4 border-t border-gray-200">
+              {/* 导出进度提示 */}
+              {exportProgress && (
+                <div className="space-y-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-blue-700">{exportProgress.step}</span>
+                    <span className="text-blue-600">{exportProgress.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-blue-100 rounded-full h-1.5">
+                    <div
+                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${exportProgress.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 导出错误提示 */}
+              {exportError && (
+                <div className="p-3 bg-red-50 rounded-lg border border-red-100 flex items-center justify-between">
+                  <span className="text-xs text-red-700">{exportError}</span>
+                  <button
+                    onClick={() => setExportError(null)}
+                    className="text-xs text-red-600 hover:text-red-800"
+                  >
+                    关闭
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={handleExportPDF}
                 disabled={isExporting}

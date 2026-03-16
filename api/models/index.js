@@ -3,6 +3,8 @@ import User from './User.js';
 import Template from './Template.js';
 import Resume from './Resume.js';
 import ExportHistory from './ExportHistory.js';
+import TokenBlacklist from './TokenBlacklist.js';
+import VerificationCode from './VerificationCode.js';
 
 User.hasMany(Resume, { foreignKey: 'user_id' });
 Resume.belongsTo(User, { foreignKey: 'user_id' });
@@ -19,4 +21,6 @@ export {
   User,
   Template,
   Resume,
+  TokenBlacklist,
+  VerificationCode,
 };

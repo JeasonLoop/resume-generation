@@ -1,21 +1,21 @@
-import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import useResumeStore from '../../store/useResumeStore';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Loader2, ChevronDown, CheckCircle, Upload, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import TemplatePreview from '../dashboard/TemplatePreview';
 
-const Toolbar = ({ onOpenPrintModal }) => {
-  const { resume, updateTitle, updateContent, updateTemplateId, saveResume, isSaving, templates, fetchTemplates } = useResumeStore();
+const Toolbar = ({ onOpenPrintModal, onSave, title, onTitleChange, isSaving, onTemplateChange, templateId, templates, onContentChange, onInsertText, onEditorSelection, onFileUpload }) => {
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    if (templates) {
+      setShowSaveSuccess(false);
+    }
+  }, [templates]);
 
   const handleSave = async () => {
-    const success = await saveResume();
+    const success = await onSave();
     if (success) {
       setShowSaveSuccess(true);
       setTimeout(() => setShowSaveSuccess(false), 2000);
@@ -33,21 +33,44 @@ const Toolbar = ({ onOpenPrintModal }) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target.result;
-      updateContent(content);
+      onContentChange(content);
     };
     reader.readAsText(file);
     e.target.value = '';
   };
 
   const handlePreviewCurrentTemplate = () => {
-    const currentTemplate = templates.find(t => t.id === resume.template_id);
+    const currentTemplate = templates?.find(t => t.id === templateId);
     if (currentTemplate) {
       setIsPreviewOpen(true);
     }
   };
 
+  const syncSelection = () => {
+    const ta = document.querySelector('textarea');
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    if (onEditorSelection) {
+      onEditorSelection({ start, end, text: ta.value.substring(start, end) });
+    }
+  };
 
-  if (!resume) return null;
+  useEffect(() => {
+    const ta = document.querySelector('textarea');
+    if (ta) {
+      ta.addEventListener('select', syncSelection);
+      ta.addEventListener('keyup', syncSelection);
+      ta.addEventListener('click', syncSelection);
+      return () => {
+        ta?.removeEventListener('select', syncSelection);
+        ta?.removeEventListener('keyup', syncSelection);
+        ta?.removeEventListener('click', syncSelection);
+      };
+    };
+  }, [onEditorSelection]);
+
+  if (!title) return null;
 
   return (
     <div className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-12 z-30 relative font-sans">
@@ -65,8 +88,8 @@ const Toolbar = ({ onOpenPrintModal }) => {
         <div className="flex items-center group relative">
           <input
             type="text"
-            value={resume.title}
-            onChange={(e) => updateTitle(e.target.value)}
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
             className="text-lg font-serif font-bold text-black border-none focus:ring-0 px-0 py-1 transition-all w-64 truncate bg-transparent placeholder-gray-300"
             placeholder="未命名项目"
           />
@@ -97,9 +120,9 @@ const Toolbar = ({ onOpenPrintModal }) => {
         <div className="flex items-center space-x-2">
           <div className="relative group">
             <select
-              value={resume.template_id || ''}
-              onChange={(e) => updateTemplateId(e.target.value)}
-              className="appearance-none bg-transparent text-xs uppercase tracking-[0.1em] font-medium text-gray-500 py-2 pl-0 pr-6 outline-none cursor-pointer group-hover:text-black transition-colors"
+              value={templateId || ''}
+              onChange={(e) => onTemplateChange(e.target.value)}
+              className="appearance-none bg-transparent text-xs uppercase tracking-[0.1em] font-medium text-gray-500 py-2 pl-0 outline-none cursor-pointer group-hover:text-black transition-colors"
               title="切换简历布局"
             >
               <option value="" disabled>选择布局</option>
@@ -109,7 +132,7 @@ const Toolbar = ({ onOpenPrintModal }) => {
             </select>
             <ChevronDown className="absolute right-0 top-2.5 h-3 w-3 text-gray-400 group-hover:text-black pointer-events-none transition-colors" strokeWidth={1} />
           </div>
-          
+
           {/* Preview Current Template Button */}
           <button
             onClick={handlePreviewCurrentTemplate}
@@ -123,13 +146,13 @@ const Toolbar = ({ onOpenPrintModal }) => {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className={`text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 disabled:opacity-50 flex items-center ${showSaveSuccess ? 'text-green-600' : 'text-black hover:text-gray-500'}`}
+          className={`text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${showSaveSuccess ? 'text-green-600' : 'text-black hover:text-gray-500'}`}
           title="保存当前进度 (自动保存已启用)"
         >
           {isSaving ? (
-            <Loader2 className="animate-spin h-3 w-3 mr-2" />
+            <Loader2 className="animate-spin h-4 w-4 mr-2" />
           ) : showSaveSuccess ? (
-            <CheckCircle className="h-3 w-3 mr-2" />
+            <CheckCircle className="h-4 w-4 mr-2" />
           ) : null}
           {isSaving ? '保存中...' : showSaveSuccess ? '已保存' : '保存作品'}
         </button>
@@ -147,8 +170,10 @@ const Toolbar = ({ onOpenPrintModal }) => {
       <TemplatePreview
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
-        template={templates.find(t => t.id === resume.template_id)}
-        content={resume.content_markdown}
+        template={templates.find(t => t.id === templateId)}
+        content={null}
+        title={title}
+        onTemplateSelect={onTemplateChange}
       />
     </div>
   );

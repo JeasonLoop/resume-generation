@@ -6,10 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import { sequelize, Template, User } from './models/index.js';
 import bcrypt from 'bcryptjs';
 import { getTemplates } from './data/templates.js';
 import { errorHandler } from './utils/response.js';
+import { authenticateToken } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +53,32 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// 更严格的限流：登录/注册接口，防止暴力破解
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: { message: '登录尝试次数过多，请15分钟后再试' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// AI接口限流，防止滥用
+const aiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // limit each IP/user to 10 requests per windowMs
+  message: { message: 'AI调用过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // 已登录用户按用户ID限流，未登录用户按IP限流
+  keyGenerator: (req) => {
+    if (req.user?.id) {
+      return `user:${req.user.id}`;
+    }
+    return req.ip;
+  }
+});
+
 app.use('/api/', apiLimiter);
 
 // CORS：仅在后端统一配置（Nginx 不添加 CORS 头，避免重复）
@@ -72,16 +100,29 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+    // 开发环境允许无Origin头请求，方便调试
+    if (NODE_ENV === 'development') {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // 生产环境严格校验Origin必须存在且在允许列表
+      if (origin && allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
   optionsSuccessStatus: 204,
   preflightContinue: false
 }));
+
+// 解析Cookie
+app.use(cookieParser());
 
 // 兼容多种 Content-Type，解决 Nginx 代理后 req.body 未解析问题
 app.use(express.json({
@@ -143,9 +184,9 @@ import resumeRoutes from './routes/resume.js';
 import aiRoutes from './routes/ai.js';
 import templateRoutes from './routes/template.js';
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/resumes', resumeRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', authenticateToken, aiLimiter, aiRoutes);
 app.use('/api/templates', templateRoutes);
 
 // 生产环境：提供 Vite 构建的前端静态资源 + SPA 回退

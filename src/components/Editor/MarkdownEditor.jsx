@@ -1,86 +1,27 @@
 import React, { useRef, useState, useEffect } from 'react';
-import useResumeStore from '../../store/useResumeStore';
 import { PenTool, Bold, Italic, List, Heading1, Heading2, Quote, Link as LinkIcon, HelpCircle, Sticker } from 'lucide-react';
 import Modal from '../Modal';
 import IconPicker from '../IconPicker';
 
-const MarkdownEditor = () => {
-  const { resume, updateContent, saveResume, setEditorSelection } = useResumeStore();
-  const textareaRef = useRef(null);
+const MarkdownEditor = ({ content, onContentChange, onInsertText, onIconSelect, textareaRef, ...props }) => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('saved');
-  const lastSaveTimeRef = useRef(0);
-
-  // 在首次渲染后初始化时间，确保 render 过程是纯净的
-  useEffect(() => {
-    lastSaveTimeRef.current = Date.now();
-  }, []);
 
   const syncSelection = () => {
     const ta = textareaRef.current;
     if (!ta) return;
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
-    setEditorSelection({ start, end, text: ta.value.substring(start, end) });
-  };
-
-  // 基于内容变化的防抖自动保存
-  useEffect(() => {
-    if (!resume?.content_markdown) return;
-
-    const timer = setTimeout(() => {
-      const timeSinceLastSave = Date.now() - lastSaveTimeRef.current;
-      if (timeSinceLastSave >= 2000) { // 至少间隔2秒
-        setSaveStatus('saving');
-        saveResume().then(success => {
-          if (success) {
-            setSaveStatus('saved');
-            lastSaveTimeRef.current = Date.now();
-          } else {
-            setSaveStatus('error');
-          }
-        });
-      }
-    }, 1500); // 停止输入1.5秒后自动保存
-
-    return () => clearTimeout(timer);
-  }, [resume?.content_markdown, saveResume]);
-
-  const insertText = (before, after = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-
-    const newText = text.substring(0, start) + before + selectedText + after + text.substring(end);
-
-    updateContent(newText);
-    setSaveStatus('unsaved'); // Mark as unsaved on change
-
-    // Restore cursor position/selection
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, end + before.length);
-    }, 0);
-  };
-
-  const handleChange = (e) => {
-    updateContent(e.target.value);
-    setSaveStatus('unsaved'); // Mark as unsaved on change
+    props.onEditorSelection({ start, end, text: ta.value.substring(start, end) });
   };
 
   const handleIconSelect = (iconName) => {
-    // Lucide icons via Iconify API for markdown images
     const iconMarkdown = `![${iconName}](https://api.iconify.design/lucide:${iconName.toLowerCase()}.svg) `;
-    insertText(iconMarkdown);
+    onInsertText(iconMarkdown);
     setIsIconPickerOpen(false);
   };
 
-  if (!resume) return null;
+  if (!textareaRef) return null;
 
   return (
     <div className="h-full flex flex-col bg-transparent font-sans">
@@ -92,28 +33,28 @@ const MarkdownEditor = () => {
         </div>
 
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar flex-1">
-          <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Bold">
+          <button onClick={() => onInsertText('**', '**')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Bold">
             <Bold size={14} strokeWidth={2.5} />
           </button>
-          <button onClick={() => insertText('*', '*')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Italic">
+          <button onClick={() => onInsertText('*', '*')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Italic">
             <Italic size={14} strokeWidth={2.5} />
           </button>
           <div className="w-px h-4 bg-gray-200 mx-1"></div>
-          <button onClick={() => insertText('# ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Heading 1">
+          <button onClick={() => onInsertText('# ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Heading 1">
             <Heading1 size={14} strokeWidth={2.5} />
           </button>
-          <button onClick={() => insertText('## ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Heading 2">
+          <button onClick={() => onInsertText('## ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Heading 2">
             <Heading2 size={14} strokeWidth={2.5} />
           </button>
           <div className="w-px h-4 bg-gray-200 mx-1"></div>
-          <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="List">
+          <button onClick={() => onInsertText('- ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="List">
             <List size={14} strokeWidth={2.5} />
           </button>
-          <button onClick={() => insertText('> ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Quote">
+          <button onClick={() => onInsertText('> ')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Quote">
             <Quote size={14} strokeWidth={2.5} />
           </button>
           <div className="w-px h-4 bg-gray-200 mx-1"></div>
-          <button onClick={() => insertText('[', '](url)')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Link">
+          <button onClick={() => onInsertText('[', '](url)')} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Link">
             <LinkIcon size={14} strokeWidth={2.5} />
           </button>
           <button onClick={() => setIsIconPickerOpen(true)} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-black transition-colors" title="Insert Icon">
@@ -136,8 +77,8 @@ const MarkdownEditor = () => {
         <textarea
           ref={textareaRef}
           className="absolute inset-0 w-full h-full p-8 bg-transparent text-gray-800 font-mono text-sm leading-relaxed resize-none focus:outline-none selection:bg-black/10 placeholder-gray-400 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
-          value={resume.content_markdown || ''}
-          onChange={handleChange}
+          value={content}
+          onChange={(e) => onContentChange(e.target.value)}
           onSelect={syncSelection}
           onKeyUp={syncSelection}
           onClick={syncSelection}
@@ -146,23 +87,10 @@ const MarkdownEditor = () => {
         />
       </div>
 
-      {/* Footer Stats & Status */}
+      {/* Footer Stats */}
       <div className="px-6 py-2 bg-white/50 border-t border-gray-200 text-[10px] uppercase tracking-[0.1em] text-gray-400 flex justify-between items-center backdrop-blur-sm">
         <span>Markdown Supported</span>
-        <div className="flex items-center space-x-4">
-          <span className={`transition-colors duration-300 ${
-            saveStatus === 'saving' ? 'text-blue-500' :
-            saveStatus === 'saved' ? 'text-green-500' :
-            saveStatus === 'error' ? 'text-red-500' :
-            'text-gray-400'
-          }`}>
-            {saveStatus === 'saving' ? 'Saving...' :
-             saveStatus === 'saved' ? 'All changes saved' :
-             saveStatus === 'error' ? 'Error saving' :
-             'Unsaved changes'}
-          </span>
-          <span className="font-mono">{resume.content_markdown?.length || 0} chars</span>
-        </div>
+        <span className="font-mono">{content?.length || 0} chars</span>
       </div>
 
       {/* Help Modal */}
@@ -172,7 +100,6 @@ const MarkdownEditor = () => {
         title="使用指南 (User Guide)"
       >
         <div className="space-y-6 text-sm text-gray-600 max-h-[60vh] overflow-y-auto pr-2">
-
           <div className="border-b border-gray-100 pb-4">
             <h4 className="font-bold text-gray-900 mb-2 flex items-center">
               <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs mr-2">1</span>

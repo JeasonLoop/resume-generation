@@ -8,7 +8,9 @@
       "Bash(npm run:*)",
       "Bash(xargs -r taskkill //F //PID)",
       "Bash(powershell:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(npm install:*)",
+      "Bash(cd /g/Desktop/workfiles/resume-generation/api && node index.js)"
     ]
   }
 }

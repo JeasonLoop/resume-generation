@@ -4,35 +4,45 @@ import axios from '../utils/axios';
 const useResumeStore = create((set, get) => ({
   resume: null,
   isLoading: false,
-  isSaving: false,
   error: null,
   templates: [],
 
   editorSelection: { start: 0, end: 0, text: '' },
   setEditorSelection: (sel) => set({ editorSelection: sel }),
 
-  insertAtCursor: (text) => {
-    const { resume, editorSelection } = get();
-    if (!resume) return;
-    const md = resume.content_markdown || '';
-    const { start, end } = editorSelection;
-    const newMd = md.substring(0, start) + text + md.substring(end);
-    set({ resume: { ...resume, content_markdown: newMd } });
+  // 初始化编辑器状态（用于从服务器同步内容到本地编辑器）
+  initEditorState: (resume) => {
+    if (resume) {
+      return {
+        content_markdown: resume.content_markdown || '',
+        title: resume.title || '',
+        template_id: resume.template_id || 1
+      };
+    }
+    return { content_markdown: '', title: '', template_id: 1 };
   },
 
-  replaceSelection: (text) => {
-    const { resume, editorSelection } = get();
-    if (!resume) return;
-    const md = resume.content_markdown || '';
-    const { start, end } = editorSelection;
-    if (start === end) {
-      const newMd = md + '\n\n' + text;
-      set({ resume: { ...resume, content_markdown: newMd } });
-    } else {
-      const newMd = md.substring(0, start) + text + md.substring(end);
-      set({ resume: { ...resume, content_markdown: newMd } });
+  // 保存简历到服务器
+  saveResume: async (id, title, content_markdown, template_id) => {
+    try {
+      set({ isLoading: true, error: null });
+      await axios.put(`/resumes/${id}`, {
+        title,
+        content_markdown,
+        content_json: {},
+        template_id
+      });
+      set({ isLoading: false, resume: { id, title, content_markdown, template_id } });
+      return true;
+    } catch (error) {
+      console.error('Save failed:', error);
+      set({ isLoading: false, error: 'Failed to save resume' });
+      return false;
     }
   },
+
+  // 更新编辑器选择状态（用于AI助手等）
+  updateEditorSelection: (selection) => set({ editorSelection: selection }),
 
   fetchTemplates: async () => {
     try {
@@ -52,47 +62,6 @@ const useResumeStore = create((set, get) => ({
       set({ isLoading: false, error: 'Failed to load resume' });
     }
   },
-
-  updateContent: (markdown) => {
-    const resume = get().resume;
-    if (resume) {
-      set({ resume: { ...resume, content_markdown: markdown } });
-    }
-  },
-
-  updateTitle: (title) => {
-    const resume = get().resume;
-    if (resume) {
-      set({ resume: { ...resume, title } });
-    }
-  },
-
-  updateTemplateId: (template_id) => {
-    const resume = get().resume;
-    if (resume) {
-      set({ resume: { ...resume, template_id: parseInt(template_id) } });
-    }
-  },
-
-  saveResume: async () => {
-    const resume = get().resume;
-    if (!resume) return;
-
-    set({ isSaving: true });
-    try {
-      await axios.put(`/resumes/${resume.id}`, {
-        title: resume.title,
-        content_markdown: resume.content_markdown,
-        content_json: {}, // We can parse markdown to json here if needed, or do it on backend
-        template_id: resume.template_id
-      });
-      set({ isSaving: false });
-      return true;
-    } catch {
-      set({ isSaving: false, error: 'Failed to save resume' });
-      return false;
-    }
-  }
 }));
 
 export default useResumeStore;

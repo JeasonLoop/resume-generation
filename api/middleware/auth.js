@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models/index.js';
+import { User, TokenBlacklist } from '../models/index.js';
 import { fail, ErrorCode } from '../utils/response.js';
 
 // 获取 JWT_SECRET，确保在运行时读取
@@ -21,6 +21,13 @@ export const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, getJwtSecret());
+
+    // 检查Token是否在黑名单中
+    const isBlacklisted = await TokenBlacklist.isBlacklisted(token);
+    if (isBlacklisted) {
+      return fail(res, ErrorCode.TOKEN_INVALID, 'Token 已失效');
+    }
+
     const dbUser = await User.findByPk(decoded.id);
     if (!dbUser) {
       return fail(res, ErrorCode.TOKEN_INVALID, '用户不存在');

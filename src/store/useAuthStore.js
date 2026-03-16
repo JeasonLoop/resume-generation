@@ -12,10 +12,12 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/login', { email, password });
-      const { user, token } = response.data.data;
+      const { user, access_token } = response.data.data;
 
-      localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      localStorage.setItem('token', access_token);
+      // 设置默认请求头
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      set({ user, token: access_token, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (error) {
       const errorMessage = error.message || '登录失败';
@@ -36,10 +38,12 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post('/auth/register', { name, email, password });
-      const { user, token } = response.data.data;
+      const { user, access_token } = response.data.data;
 
-      localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      localStorage.setItem('token', access_token);
+      // 设置默认请求头
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      set({ user, token: access_token, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (error) {
       set({
@@ -50,9 +54,18 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
-    set({ user: null, token: null, isAuthenticated: false });
+  logout: async () => {
+    try {
+      // 调用后端退出登录接口
+      await axios.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // 无论接口调用是否成功，都清除本地状态
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
+      set({ user: null, token: null, isAuthenticated: false });
+    }
   },
 
   fetchUser: async () => {
