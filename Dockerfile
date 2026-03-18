@@ -8,16 +8,16 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# 复制前端依赖文件（不复制 package-lock.json，避免跨平台原生绑定问题）
+# 只复制依赖文件 - 利用 Docker 缓存，只有依赖变化才重新执行 npm install
 COPY package.json ./
-COPY vite.config.js ./
-COPY postcss.config.js ./
-COPY eslint.config.js ./
 
 # 安装所有依赖（使用 npm install 确保原生依赖正确编译）
 RUN npm install
 
-# 复制前端源代码
+# 复制配置文件和源代码
+COPY vite.config.js ./
+COPY postcss.config.js ./
+COPY eslint.config.js ./
 COPY index.html ./
 COPY public/ ./public/
 COPY src/ ./src/
