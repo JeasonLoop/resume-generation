@@ -47,8 +47,8 @@ services:
     container_name: resume-generation-nginx
     restart: unless-stopped
     ports:
-      - "80:80"    # 域名直接访问 http://resumegen.jeasonloop.online
-      - "443:443"  # 域名直接访问 https://resumegen.jeasonloop.online
+      - "8080:80"    # 不直接占用宿主机 80，改为非冲突端口
+      - "4433:443"  # 不直接占用宿主机 443，改为非冲突端口
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
