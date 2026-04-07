@@ -6,6 +6,9 @@
 # 阶段1: 构建前端
 FROM node:20-alpine AS frontend-builder
 
+# 使用国内镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 WORKDIR /app
 
 # 只复制依赖文件 - 利用 Docker 缓存，只有依赖变化才重新执行 npm install
@@ -27,6 +30,9 @@ RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 # 阶段2: 构建后端镜像
 FROM node:20-alpine
+
+# 使用国内镜像源（解决国外镜像网络不稳定问题）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 安装轻量化系统依赖 + 编译工具（sqlite3 需要）
 RUN apk add --no-cache \
