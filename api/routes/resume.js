@@ -5,7 +5,11 @@ import {
   getResumeById,
   updateResume,
   deleteResume,
-  deleteResumesBatch
+  deleteResumesBatch,
+  getVersions,
+  getVersionById,
+  restoreVersion,
+  deleteVersion
 } from '../controllers/resumeController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -19,5 +23,11 @@ router.post('/batch-delete', deleteResumesBatch);
 router.get('/:id', getResumeById);
 router.put('/:id', updateResume);
 router.delete('/:id', deleteResume);
+
+// Version history routes
+router.get('/:id/versions', getVersions);
+router.get('/:id/versions/:versionId', getVersionById);
+router.post('/:id/versions/:versionId/restore', restoreVersion);
+router.delete('/:id/versions/:versionId', deleteVersion);
 
 export default router;

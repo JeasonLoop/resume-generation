@@ -41,8 +41,8 @@ const PORT = process.env.PORT || 3001;
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // 禁用 CSP，避免在 HTTP 下限制资源加载
-  hsts: false,                  // 禁用 HSTS，防止浏览器强制跳转 HTTPS
+  contentSecurityPolicy: NODE_ENV === 'production', // 生产环境启用 CSP
+  hsts: NODE_ENV === 'production',                  // 生产环境启用 HSTS
 }));
 
 // Rate limiting
@@ -183,11 +183,13 @@ import authRoutes from './routes/auth.js';
 import resumeRoutes from './routes/resume.js';
 import aiRoutes from './routes/ai.js';
 import templateRoutes from './routes/template.js';
+import publicRoutes from './routes/public.js';
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/ai', authenticateToken, aiLimiter, aiRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/public', publicRoutes);
 
 // 生产环境：提供 Vite 构建的前端静态资源 + SPA 回退
 if (NODE_ENV === 'production') {
@@ -235,7 +237,8 @@ const seedDefaultUser = async () => {
 // Database sync and server start
 const shouldForceReset = NODE_ENV === 'development' && process.env.RESET_DB === 'true';
 // SQLite 不支持复杂的 alter 操作，开发环境下如果同步失败，建议手动设置 RESET_DB=true 重置
-const shouldAlter = NODE_ENV === 'production'; 
+// 生产环境关闭 alter，避免自动变更导致数据风险（请使用迁移工具管理 schema 变更）
+const shouldAlter = false;
 
 // 错误处理中间件（必须放在所有路由之后）
 app.use(errorHandler);

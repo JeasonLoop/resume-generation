@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
+import PublicResume from './pages/PublicResume';
 import useAuthStore from './store/useAuthStore';
 import InteractiveParticles from './components/InteractiveParticles';
 import LoadingScreen from './components/LoadingScreen';
@@ -55,6 +56,9 @@ function App() {
             } />
             <Route path="/about" element={
               <About />
+            } />
+            <Route path="/share/:id" element={
+              <PublicResume />
             } />
           </Routes>
         </Router>

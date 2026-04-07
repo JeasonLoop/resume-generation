@@ -273,6 +273,19 @@ const About = () => {
 
         {/* Footer */}
         <div className="text-center mt-16 pt-8 border-t border-gray-200">
+          {/* 友情链接 */}
+          <div className="mb-4">
+            <span className="text-gray-500 text-sm">友情链接：</span>
+            <a
+              href="https://linux.do/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 hover:underline ml-1"
+            >
+              Linux.do
+            </a>
+            <span className="text-gray-400 text-sm ml-2">本项目认可</span>
+          </div>
           <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
             用 <Heart size={14} className="text-red-500 fill-current" /> 制作
             <span className="mx-2">•</span>

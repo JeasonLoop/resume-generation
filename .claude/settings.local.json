@@ -10,7 +10,9 @@
       "Bash(powershell:*)",
       "Bash(git:*)",
       "Bash(npm install:*)",
-      "Bash(cd /g/Desktop/workfiles/resume-generation/api && node index.js)"
+      "Bash(cd /g/Desktop/workfiles/resume-generation/api && node index.js)",
+      "Bash(find /g/Desktop/workfiles/resume-generation -type f -name \"*.md\" -exec wc -l {} \\\\;)",
+      "Bash(xargs wc:*)"
     ]
   }
 }

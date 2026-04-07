@@ -106,6 +106,13 @@ const Dashboard = () => {
     setSelectedResumeIds(new Set());
   };
 
+  // 更新分享状态
+  const handleUpdateShare = (id, is_public) => {
+    setResumes(resumes.map(r =>
+      r.id === id ? { ...r, is_public } : r
+    ));
+  };
+
   const [toast, setToast] = useState(null);
 
   const showToast = useCallback((message, type = 'error') => {
@@ -291,6 +298,7 @@ const Dashboard = () => {
                 isSelected={selectedResumeIds.has(resume.id)}
                 onToggleSelection={toggleSelection}
                 onDelete={confirmDelete}
+                onUpdateShare={handleUpdateShare}
               />
             ))}
 

@@ -40,3 +40,6 @@ backups/
 nginx/logs/*
 !nginx/logs/.gitkeep
 nginx/ssl/*
+
+
+.claude/

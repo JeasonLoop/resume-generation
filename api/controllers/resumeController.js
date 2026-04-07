@@ -1,7 +1,8 @@
-import { Resume, Template } from '../models/index.js';
+import { Resume, Template, ResumeVersion } from '../models/index.js';
 import { success, fail, paginated, ErrorCode } from '../utils/response.js';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const MAX_VERSIONS_PER_RESUME = 50; // 每个简历最多保存 50 个版本
 
 export const createResume = async (req, res) => {
   try {
@@ -129,6 +130,30 @@ export const updateResume = async (req, res) => {
       is_public: is_public !== undefined ? is_public : resume.is_public
     });
 
+    // 自动保存版本历史 - 只有当内容变化时才保存
+    // 获取当前最大版本号
+    const maxVersion = await ResumeVersion.max('version_number', { where: { resume_id: id } }) || 0;
+    await ResumeVersion.create({
+      resume_id: id,
+      title: resume.title,
+      content_markdown: resume.content_markdown,
+      content_json: resume.content_json,
+      template_id: resume.template_id,
+      version_number: maxVersion + 1
+    });
+
+    // 如果超过最大版本数，删除最旧的版本
+    const versionCount = await ResumeVersion.count({ where: { resume_id: id } });
+    if (versionCount > MAX_VERSIONS_PER_RESUME) {
+      const oldVersions = await ResumeVersion.findAll({
+        where: { resume_id: id },
+        order: [['version_number', 'ASC']],
+        limit: versionCount - MAX_VERSIONS_PER_RESUME
+      });
+      const oldIds = oldVersions.map(v => v.id);
+      await ResumeVersion.destroy({ where: { id: oldIds } });
+    }
+
     return success(res, resume, '简历更新成功');
   } catch (error) {
     console.error('Update resume error:', error);
@@ -184,6 +209,139 @@ export const deleteResumesBatch = async (req, res) => {
     return success(res, { deletedCount }, `成功删除 ${deletedCount} 份简历`);
   } catch (error) {
     console.error('Batch delete resume error:', error);
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
+  }
+};
+
+// 获取简历版本历史列表
+export const getVersions = async (req, res) => {
+  try {
+    const { id } = req.params; // resume id
+    const user_id = req.user.id;
+
+    // 验证简历属于当前用户
+    const resume = await Resume.findOne({ where: { id, user_id } });
+    if (!resume) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
+    }
+
+    const versions = await ResumeVersion.findAll({
+      where: { resume_id: id },
+      order: [['version_number', 'DESC']],
+      attributes: ['id', 'version_number', 'title', 'template_id', 'created_at']
+    });
+
+    return success(res, versions);
+  } catch (error) {
+    console.error('Get versions error:', error);
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
+  }
+};
+
+// 获取单个版本内容
+export const getVersionById = async (req, res) => {
+  try {
+    const { id, versionId } = req.params;
+    const user_id = req.user.id;
+
+    const resume = await Resume.findOne({ where: { id, user_id } });
+    if (!resume) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
+    }
+
+    const version = await ResumeVersion.findOne({
+      where: { id: versionId, resume_id: id }
+    });
+    if (!version) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到版本');
+    }
+
+    // Parse content_json if it's a string
+    if (typeof version.content_json === 'string') {
+      try {
+        version.content_json = JSON.parse(version.content_json);
+      } catch {
+        // keep as string if parse fails
+      }
+    }
+
+    return success(res, version);
+  } catch (error) {
+    console.error('Get version error:', error);
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
+  }
+};
+
+// 恢复到指定版本
+export const restoreVersion = async (req, res) => {
+  try {
+    const { id, versionId } = req.params;
+    const user_id = req.user.id;
+
+    const resume = await Resume.findOne({ where: { id, user_id } });
+    if (!resume) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
+    }
+
+    const version = await ResumeVersion.findOne({
+      where: { id: versionId, resume_id: id }
+    });
+    if (!version) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到版本');
+    }
+
+    // 恢复之前先保存当前版本
+    const maxVersion = await ResumeVersion.max('version_number', { where: { resume_id: id } }) || 0;
+    await ResumeVersion.create({
+      resume_id: id,
+      title: resume.title,
+      content_markdown: resume.content_markdown,
+      content_json: resume.content_json,
+      template_id: resume.template_id,
+      version_number: maxVersion + 1
+    });
+
+    // 恢复版本内容到当前简历
+    await resume.update({
+      title: version.title,
+      content_markdown: version.content_markdown,
+      content_json: version.content_json,
+      template_id: version.template_id
+    });
+
+    return success(res, { resume }, `已恢复到版本 ${version.version_number}`);
+  } catch (error) {
+    console.error('Restore version error:', error);
+    const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
+    return fail(res, ErrorCode.INTERNAL_ERROR, message);
+  }
+};
+
+// 删除版本
+export const deleteVersion = async (req, res) => {
+  try {
+    const { id, versionId } = req.params;
+    const user_id = req.user.id;
+
+    const resume = await Resume.findOne({ where: { id, user_id } });
+    if (!resume) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到简历');
+    }
+
+    const deleted = await ResumeVersion.destroy({
+      where: { id: versionId, resume_id: id }
+    });
+
+    if (!deleted) {
+      return fail(res, ErrorCode.NOT_FOUND, '未找到版本');
+    }
+
+    return success(res, null, '版本已删除');
+  } catch (error) {
+    console.error('Delete version error:', error);
     const message = NODE_ENV === 'production' ? '服务器内部错误' : error.message;
     return fail(res, ErrorCode.INTERNAL_ERROR, message);
   }

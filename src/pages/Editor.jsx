@@ -6,9 +6,10 @@ import Preview from '../components/Editor/Preview';
 import Toolbar from '../components/Editor/Toolbar';
 import AIAssistant from '../components/Editor/AIAssistant';
 import PrintSettingsModal from '../components/Editor/PrintSettingsModal';
+import VersionHistoryModal from '../components/Editor/VersionHistoryModal';
 import { EditorSkeleton } from '../components/common/Skeleton';
 import { useEditorShortcuts } from '../hooks/useKeyboardShortcuts';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, History } from 'lucide-react';
 import axios from '../utils/axios';
 
 // 新的保存方式：本地编辑状态 + 防抖保存
@@ -18,6 +19,7 @@ const Editor = () => {
   const printRef = useRef();
   const textareaRef = useRef(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showVersionModal, setShowVersionModal] = useState(false);
   const [printSettings, setPrintSettings] = useState({
     fontFamily: 'Inter, sans-serif',
     fontSize: 12,
@@ -106,29 +108,35 @@ const Editor = () => {
   const handleContentChange = (value) => {
     setLocalContent(value);
     setIsDirty(value !== '');
-    // 更新store状态但不触发更新，直接同步预览
-    const currentResume = useResumeStore.getState().resume;
-    if (currentResume) {
-      currentResume.content_markdown = value;
-    }
+    // 使用正确的 setState 更新 store
+    useResumeStore.setState(state => ({
+      resume: state.resume
+        ? { ...state.resume, content_markdown: value }
+        : null
+    }));
   };
 
   // 处理标题变化
   const handleTitleChange = (value) => {
     setLocalTitle(value);
-    const currentResume = useResumeStore.getState().resume;
-    if (currentResume) {
-      currentResume.title = value;
-    }
+    // 使用正确的 setState 更新 store
+    useResumeStore.setState(state => ({
+      resume: state.resume
+        ? { ...state.resume, title: value }
+        : null
+    }));
   };
 
   // 处理模板切换
   const handleTemplateChange = (value) => {
-    setLocalTemplateId(parseInt(value));
-    const currentResume = useResumeStore.getState().resume;
-    if (currentResume) {
-      currentResume.template_id = parseInt(value);
-    }
+    const templateId = parseInt(value);
+    setLocalTemplateId(templateId);
+    // 使用正确的 setState 更新 store
+    useResumeStore.setState(state => ({
+      resume: state.resume
+        ? { ...state.resume, template_id: templateId }
+        : null
+    }));
   };
 
   // 处理编辑器选择变化（供AI助手使用）
@@ -164,6 +172,14 @@ const Editor = () => {
   const handleIconSelect = (iconName) => {
     const iconMarkdown = `![${iconName}](https://api.iconify.design/lucide:${iconName.toLowerCase()}.svg) `;
     insertText(iconMarkdown);
+  };
+
+  const handleRestoreVersion = (version) => {
+    setLocalContent(version.content_markdown || '');
+    setLocalTitle(version.title || '');
+    setLocalTemplateId(version.template_id || 1);
+    setIsDirty(true);
+    setShowVersionModal(false);
   };
 
   if (isLoading) {
@@ -202,6 +218,13 @@ const Editor = () => {
       <div className="bg-white border-b border-gray-100 px-4 py-1 text-xs flex items-center justify-between">
         <span>编辑模式</span>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowVersionModal(true)}
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <History size={12} />
+            <span>历史版本</span>
+          </button>
           {isDirty && <span className="text-gray-500">未保存</span>}
           {lastSavedAt && !isDirty && (
             <span className="text-green-600">已保存</span>
@@ -263,6 +286,14 @@ const Editor = () => {
         onClose={() => setShowPrintModal(false)}
         printSettings={printSettings}
         onSettingsChange={setPrintSettings}
+      />
+
+      {/* Version History Modal */}
+      <VersionHistoryModal
+        resumeId={id}
+        isOpen={showVersionModal}
+        onClose={() => setShowVersionModal(false)}
+        onRestore={handleRestoreVersion}
       />
     </div>
   );
