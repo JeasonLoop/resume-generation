@@ -204,11 +204,23 @@ if (NODE_ENV === 'production') {
 const seedTemplates = async () => {
   const templates = getTemplates();
   console.log(`Syncing ${templates.length} templates...`);
-  
-  for (const t of templates) {
-    await Template.upsert(t);
+
+  // 先将所有简历关联的模板 ID 置空，防止外键约束报错
+  await sequelize.query('UPDATE resumes SET template_id = NULL');
+
+  // 先清空旧模板，避免重复
+  await Template.destroy({ where: {} });
+  // 重置自增ID (SQLite)
+  try {
+    await sequelize.query('DELETE FROM sqlite_sequence WHERE name="templates"');
+  } catch (e) {
+    // 忽略错误
   }
-  
+
+  for (const t of templates) {
+    await Template.create(t);
+  }
+
   console.log('Templates synced');
 };
 

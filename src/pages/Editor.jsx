@@ -15,7 +15,7 @@ import axios from '../utils/axios';
 // 新的保存方式：本地编辑状态 + 防抖保存
 const Editor = () => {
   const { id } = useParams();
-  const { fetchResume, isLoading, error, templates } = useResumeStore();
+  const { fetchResume, fetchTemplates, isLoading, error, templates } = useResumeStore();
   const printRef = useRef();
   const textareaRef = useRef(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -36,6 +36,11 @@ const Editor = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+
+  // 加载模板列表
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   // 防抖保存
   useEffect(() => {
@@ -140,7 +145,7 @@ const Editor = () => {
   };
 
   // 处理编辑器选择变化（供AI助手使用）
-  const handleEditorSelection = (selection) => {
+  const handleEditorSelection = () => {
     // 可以在这里更新store的editorSelection状态
   };
   useEditorShortcuts({

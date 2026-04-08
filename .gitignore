@@ -35,7 +35,7 @@ database.sqlite
 *.sqlite
 
 # Docker 数据与备份（生产挂载目录）
-data/
+/data/
 backups/
 nginx/logs/*
 !nginx/logs/.gitkeep

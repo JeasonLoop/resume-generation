@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from '../utils/axios';
 
-const useResumeStore = create((set, get) => ({
+const useResumeStore = create((set) => ({
   resume: null,
   isLoading: false,
   error: null,
