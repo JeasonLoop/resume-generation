@@ -289,7 +289,7 @@ const About = () => {
           <p className="text-gray-500 text-sm flex items-center justify-center gap-2">
             用 <Heart size={14} className="text-red-500 fill-current" /> 制作
             <span className="mx-2">•</span>
-            © 2024 Resume.gen
+            © 2026 Resume.gen
           </p>
         </div>
       </main>
