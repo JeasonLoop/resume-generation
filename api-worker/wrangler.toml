@@ -1,0 +1,12 @@
+name = "resume-generation-api"
+main = "src/index.ts"
+compatibility_date = "2026-04-28"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "resume_generation"
+database_name = "resume_generation"
+database_id = "a7d782b0-f812-435a-8146-f009ade9faab"
+
+[vars]
+NODE_ENV = "production"
