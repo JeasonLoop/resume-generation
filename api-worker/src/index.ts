@@ -78,6 +78,49 @@ const fail = (code: number, message: string, data: unknown = null) => {
   return { code, message, data };
 };
 
+const parseJsonField = (value: string) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const serializeTemplate = (template: typeof templates.$inferSelect) => ({
+  id: template.id,
+  name: template.name,
+  category: template.category,
+  style: template.style,
+  css_styles: template.cssStyles,
+  structure_json: parseJsonField(template.structureJson),
+  is_premium: template.isPremium,
+  usage_count: template.usageCount,
+  created_at: template.createdAt,
+});
+
+const serializeResume = (resume: typeof resumes.$inferSelect) => ({
+  id: resume.id,
+  user_id: resume.userId,
+  template_id: resume.templateId,
+  title: resume.title,
+  content_json: parseJsonField(resume.contentJson),
+  content_markdown: resume.contentMarkdown,
+  is_public: resume.isPublic,
+  created_at: resume.createdAt,
+  updated_at: resume.updatedAt,
+});
+
+const serializeResumeVersion = (version: typeof resumeVersions.$inferSelect) => ({
+  id: version.id,
+  resume_id: version.resumeId,
+  title: version.title,
+  content_markdown: version.contentMarkdown,
+  content_json: parseJsonField(version.contentJson),
+  template_id: version.templateId,
+  version_number: version.versionNumber,
+  created_at: version.createdAt,
+});
+
 const getDb = (c: { env: Bindings }) => drizzle(c.env.DB);
 const isValidApiKey = (key?: string | null) => Boolean(key && key.length >= 20 && !key.startsWith("your_"));
 const randomCode = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -141,7 +184,7 @@ app.get("/api/health", (c) => {
 app.get("/api/templates", async (c) => {
   const db = getDb(c);
   const list = await db.select().from(templates).orderBy(templates.id);
-  return c.json(success(list));
+  return c.json(success(list.map(serializeTemplate)));
 });
 
 app.get("/api/templates/:id", async (c) => {
@@ -151,7 +194,7 @@ app.get("/api/templates/:id", async (c) => {
   if (!item) {
     return c.json(fail(ErrorCode.NOT_FOUND, "模板不存在"));
   }
-  return c.json(success(item));
+  return c.json(success(serializeTemplate(item)));
 });
 
 app.post("/api/auth/register", async (c) => {
@@ -462,16 +505,7 @@ app.get("/api/resumes/:id", auth, async (c) => {
     return c.json(fail(ErrorCode.NOT_FOUND, "未找到简历"));
   }
 
-  return c.json(success({
-    ...resume,
-    content_json: (() => {
-      try {
-        return JSON.parse(resume.contentJson);
-      } catch {
-        return resume.contentJson;
-      }
-    })(),
-  }));
+  return c.json(success(serializeResume(resume)));
 });
 
 app.post("/api/resumes", auth, async (c) => {
@@ -512,7 +546,7 @@ app.post("/api/resumes", auth, async (c) => {
     isPublic: body.is_public ?? false,
   }).returning();
 
-  return c.json(success(inserted[0], "简历创建成功"));
+  return c.json(success(serializeResume(inserted[0]), "简历创建成功"));
 });
 
 app.put("/api/resumes/:id", auth, async (c) => {
@@ -560,7 +594,7 @@ app.put("/api/resumes/:id", auth, async (c) => {
   }).where(eq(resumes.id, id));
 
   const [updated] = await db.select().from(resumes).where(eq(resumes.id, id)).limit(1);
-  return c.json(success(updated, "简历更新成功"));
+  return c.json(success(serializeResume(updated), "简历更新成功"));
 });
 
 app.delete("/api/resumes/:id", auth, async (c) => {
@@ -623,12 +657,7 @@ app.get("/api/resumes/:id/versions/:versionId", auth, async (c) => {
     .where(and(eq(resumeVersions.id, versionId), eq(resumeVersions.resumeId, id))).limit(1);
   if (!version) return c.json(fail(ErrorCode.NOT_FOUND, "未找到版本"));
 
-  return c.json(success({
-    ...version,
-    content_json: (() => {
-      try { return JSON.parse(version.contentJson); } catch { return version.contentJson; }
-    })(),
-  }));
+  return c.json(success(serializeResumeVersion(version)));
 });
 
 app.post("/api/resumes/:id/versions/:versionId/restore", auth, async (c) => {
